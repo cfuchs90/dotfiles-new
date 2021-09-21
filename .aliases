@@ -1,0 +1,4 @@
+alias stratoserver='ssh christian@h2898459.stratoserver.net'
+STRATOSERVER='christian@h2898459.stratoserver.net'
+export STRATOSERVER
+alias zt='zathura'

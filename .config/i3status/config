@@ -1,0 +1,34 @@
+general {
+	output_format = "i3bar"
+	colors = true
+	interval = 5
+	separator = "|"
+
+}
+
+order += "wireless wlp2s0"
+order += "battery 0"
+order += "tztime berlin"
+
+
+wireless wlp2s0 {
+	 format_up = "  %ip at %essid"
+	 format_down = "  down"
+	 
+}
+
+battery 0 {
+	format = "%status %percentage %remaining"
+	format_down = "no battery"
+	 status_chr = "⚡ CHR"
+         status_bat = "🔋 BAT"
+         status_unk = "? UNK"
+         status_full = "☻ FULL"
+         path = "/sys/class/power_supply/BAT%d/uevent"
+         low_threshold = 10
+}
+
+tztime berlin {
+       format = "%Y-%m-%d %H:%M"
+       timezone = "Europe/Berlin"
+}
