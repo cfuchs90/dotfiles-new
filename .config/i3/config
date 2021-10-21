@@ -238,7 +238,7 @@ for_window [class=".*"] border pixel 1
 #gaps outer $outer_gaps
 #smart_gaps on
 
-exec picom -b
+#exec picom -b
 #exec wal -n -i ~/wallpapers/10-14-Night.jpg
-#exec feh --bg-scale ~/wallpapers/img0163.jpg
+exec feh --bg-scale /home/christian/wallpaper/10-14-Night.jpg
 #xoexec wal -i ~/wallpapers/img0163.jpg

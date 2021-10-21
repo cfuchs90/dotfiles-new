@@ -66,11 +66,13 @@ XClock*secondColor: rgba:b4/b8/c1/ff
 
 ! Set depth to make transparency work.
 URxvt*depth: 32
+URxvt.shading:  45
 urxvt*background: [80]#000000 
 urxvt*scrollBar: false
 URxvt*.perl-ext-common: default,matcher,clipboard,url-select,keyboard-select,font-size
 URxvt*keysym.M-Escape: perl:keyboard-select:active
 URxvt*keysym.M-u: perl:url-select:select_next
 ! URxvt*keysym.M-c: eval:selection_to_clipboard
-! URxvt*keysym.M-v: eval:paste_clipboard 
+! URxvt*keysym.M-v: eval:paste_clipboard
+URxvt.transparent:   true
 urxvt*font: xft:dejavusansmono:size=11

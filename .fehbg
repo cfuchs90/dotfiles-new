@@ -1,2 +1,2 @@
 #!/bin/sh
-feh --no-fehbg --bg-fill '/home/christian/wallpapers/10-14-Night.jpg' 
+feh --no-fehbg --bg-scale '/home/christian/wallpaper/10-14-Night.jpg' 

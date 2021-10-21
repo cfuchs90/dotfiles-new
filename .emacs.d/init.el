@@ -4,7 +4,6 @@
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
 (add-to-list 'load-path "~/emacs.d/offline-packages")
-(add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
 
 (setq package-enable-at-startup nil)
 (package-initialize)
@@ -20,93 +19,44 @@
 ;; require use-package
 (eval-when-compile
   (require 'use-package))
-
-;; mu4e
-(require 'mu4e)
-
-;;(set-frame-font "JetBrains Mono")
-(set-frame-font "Fira Mono")
-
-(setq mu4e-maildir (expand-file-name "~/.mail/gmail"))
-(setq mu4e-drafts-folder "/gmail/Entw&APw-rfe")
-(setq mu4e-sent-folder "/gmail/Gesendet")
-(setq mu4e-trash-folder "/gmail/Papierkorb")
-(setq mu4e-user-email-address-list "fuchs.christian90@gmail.com")
-(setq mu4e-view-show-addresses t)
-(setq message-kill-buffer-on-exit t)
-(setq mu4e-context-policy 'pick-first)
-(setq mu4e-conform-quit nil)
-(setq mu4e-attachment-dir "~/Downloads/MailAttachments")
-(setq mu4e-vie-show-images t)
-(when (fboundp 'imagemagick-register-types)
-  (imagemagick-register-types))
-(setq mu4e-sent-messages-behaviour 'delete)
-(setq user-mail-address "fuchs.christian90@gmail.com")
-(setq user-full-name "Christian Fuchs")
-
-(setq mu4e-maildir-shortcuts
-      '(
-	("/gmail/Inbox" . ?i)
-	("/gmail/Services" . ?s)
-	("/gmail/Gesendet" . ?g)))
-;; mu4e Shortcuts
-;; (setq mu4e-maildir-shortcuts
-;;       '(
-;; 	("Inbox" . ?i)
-;; 	("Gesendet" . ?g)
-;; 	("Papierkorb" . ?t)
-;; 	("Services" . ?s)))
+(setq use-package-always-ensure t)
 
 ;; Themes
+; atom-one-dark theme as main theme for emacs
+(use-package atom-one-dark-theme
+  :ensure t
+  :config
+  (load-theme 'atom-one-dark t))
 
-;; atom-one-dark theme as main theme for emacs
-(when (window-system)(use-package atom-one-dark-theme
-  :ensure t)
-(use-package org-beautify-theme
-  :ensure t)
-(use-package smart-mode-line-atom-one-dark-theme
-  :ensure t)
+(use-package doom-themes)
 
-(use-package smart-mode-line
-  :ensure t)
-(use-package xresources-theme
-  :ensure t))
-
-
-
-
-
-
-;; transparency
-(set-frame-parameter (selected-frame) 'alpha '(85 . 50))
-(add-to-list 'default-frame-alist '(alpha . (85 . 50)))
-
-(defun toggle-transparency ()
-  (interactive)
-  (let ((alpha (frame-parameter nil 'alpha)))
-    (set-frame-parameter
-     nil 'alpha
-     (if (eql (cond ((numberp alpha) alpha)
-                    ((numberp (cdr alpha)) (cdr alpha))
-                    ;; Also handle undocumented (<active> <inactive>) form.
-                    ((numberp (cadr alpha)) (cadr alpha)))
-              100)
-         '(85 . 50) '(100 . 100)))))
-
+(use-package vscode-dark-plus-theme)
   
+  
+(use-package org-beautify-theme
+  :ensure t
+  :config
+  (load-theme 'org-beautify t))
 
 (use-package smart-mode-line-atom-one-dark-theme
   :ensure t)
 
 (use-package smart-mode-line
-  :ensure t)
-  ;; (setq sml/theme 'atom-one-dark)
-  ;; (sml/setup))
+  :config
+  (setq sml/theme 'atom-one-dark)
+  (sml/setup))
 
 
 ;; general nice editing configs
 (use-package ivy
-  :ensure t)
+  :ensure t
+  :config
+  (setq ivy-use-virtual-buffers t))
+
+(use-package ivy-rich
+  :ensure t
+  :init
+  (ivy-rich-mode 1))
 
 (use-package counsel
   :ensure t)
@@ -115,6 +65,17 @@
   :ensure t
   :config
   (global-undo-tree-mode 1))
+
+(use-package helpful
+  :ensure t
+  :custom
+  (counsel-describe-function-function #'helpful-callable)
+  (counsel-describe-variable-function #'helpful-variable)
+  :bind
+  ([remap describe-function] . counsel-describe-function)
+  ([remap describe-command] . helpful-command)
+  ([remap describe-variable] . counsel-describe-variable)
+  ([remap describe-key] . helpful-key))
 
 (use-package which-key
   :ensure t
@@ -126,19 +87,23 @@
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 
-(use-package perspeen
-  :ensure t
+
+(use-package perspective
+  :ensure t  ; use `:straight t` if using straight.el!
+  :bind (("C-x k" . persp-kill-buffer*))
+  :custom (setq persp-mode-prefix-key (kbd "C-ä"))
   :init
-  (setq perspeen-use-tab t)
-  :config
-  (perspeen-mode t))
+  (persp-mode))
 
 (use-package key-chord
   :ensure t
   :init
   (require 'key-chord)
   (key-chord-mode 1)
-  (key-chord-define-global "qq" 'view-mode))
+  (key-chord-define-global "qq" 'view-mode)
+  (key-chord-define evil-insert-state-map  "jk" 'evil-normal-state))
+
+(use-package evil)
 
 (use-package view
   :ensure t
@@ -154,10 +119,25 @@
    :ensure t)
 
 (use-package projectile
-  :ensure t)
+  :ensure t
+  :diminish projectile-mode
+  :config (projectile-mode)
+  :custom ((projectile-complection-system 'ivy))
+  :bind-keymap
+  ("C-c p" . projectile-command-map)
+  :init
+  (when (file-directory-p "~/Schreibtisch/Projects")
+    (setq projectile-project-search-path '("~/Schreibtisch/Projects")))
+  (setq projectile-switch-project-action #'projectile-dired))
+
+(use-package counsel-projectile
+  :ensure t
+  :config
+  (counsel-projectile-mode))
 
 (use-package rainbow-delimiters
-   :ensure t)
+  :ensure t
+  :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package flycheck
   :ensure t)
@@ -244,7 +224,7 @@
     (treemacs-hide-gitignored-files-mode nil))
   :bind
   (:map global-map
-        ("M-ä"       . treemacs-select-window)
+        ("M-ö"       . treemacs-select-window)
         ("C-x t 1"   . treemacs-delete-other-windows)
         ("C-x t t"   . treemacs)
         ("C-x t B"   . treemacs-bookmark)
@@ -273,44 +253,49 @@
   :ensure t
   :config (treemacs-set-scope-type 'Perspectives))
 
-;; Hydra Bindings
-(use-package use-package-hydra
-  :ensure t)
-
-(use-package hydra
-  :bind
-  :hydra (hydra-tab (global-map "C-t")
-  "Perspeen Tab"
-  ("c" perspeen-tab-create-tab)
-  ("n" perspeen-tab-next)
-  ("d" perspeen-tab-del)
-  ("p" perspeen-tab-prev))
-
-  :hydra (hydra-workspace (global-map "C-ü")
-  "Perspeen Workspace"
-  ("c" perspeen-create-ws)
-  ("n" perspeen-next-ws)
-  ("p" perspeen-previous-ws)
-  ("d" perspeen-delete-ws)
-  ("r" perspeen-rename-ws)))
-
-;;   (defhydra( hydra-tab (global-map "C-t")
-;;   "Perspeen Tab"
-;;   ("c" perspeen-tab-create-tab)
-;;   ("n" perspeen-tab-next)
-;;   ("d" perspeen-tab-del)
-;;   ("p" perspeen-tab-prev))
-
-;; (defhydra hydra-workspace (global-map "C-ü")
-;;   "Perspeen Workspace"
-;;   ("c" perspeen-create-ws)
-;;   ("n" perspeen-next-ws)
-;;   ("p" perspeen-previous-ws)
-;;   ("d" perspeen-delete-ws)
-;;   ("r" perspeen-rename-ws)))
-
-
+;; 
 ;; General Development
+(defun efs/lsp-mode-setup()
+  (setq lsp-headerline-breadcrumb-segmets '(path-up-to-project file symbols))
+  (lsp-headerline-breadcrumb-mode))
+
+(use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :hook (lsp-mode . efs/lsp-mode-setup)
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :config
+  (lsp-enable-which-key-integration t))
+
+(use-package lsp-ui
+  :hook (lsp-mode .lsp-ui-mode)
+  :custom
+  (lsp-ui-doc-position 'bottom))
+
+(use-package lsp-treemacs
+  :after lsp)
+
+(use-package lsp-ivy)
+
+
+(use-package dap-mode)
+
+(use-package company
+  :after lsp-mode
+  :hook (prog-mode . company-mode)
+  :bind (:map company-active-map
+	      ("<tab>" . company-complete-selection))
+  (:map lsp-mode-map
+	("<tab>" . company-indent-or-complete-common))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
+
+
+
 (use-package docker
   :ensure t
   :bind ("C-c d" . docker))
@@ -327,10 +312,20 @@
   :ensure t)
 
 ;; WebDev Packages
+(use-package typescript-mode
+  :mode "\\.ts\\'"
+  :hook
+  (typescript-mode . lsp-deferred)
+  :config
+  (setq typescript-indent-level 2)
+  (require 'dap-node)
+  (dap-node-setup))
+
+
 (use-package js2-mode
   :ensure t
   :mode
-  (("\\.js\\'" . js2-mode))
+  (("\\.jsx?\\'" . js2-mode))
   :init
   (setq js-basic-indent 2)
   (setq-default js2-basic-indent 4
@@ -346,11 +341,13 @@
 (use-package js2-refactor
   :ensure t
   :mode
-  (("\\.js\\'" . js2-mode))
+  (("\\.jsx?\\'" . js2-mode))
   :init
   (add-hook 'js2-mode-hook 'js2-refactor-mode)
   :config
   (js2r-add-keybindings-with-prefix "C-c ."))
+
+
 
 ;; (use-package xref-js2
 ;;   :ensure t
@@ -359,33 +356,185 @@
 ;;   (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t))))
 
 
+;; Python Development
+(use-package python-mode
+  :hook (python-mode . lsp-deferred)
+  :config
+  (setq virtualenv-workon-home "~/.local/share/virtualenvs")
+  :custom
+  (python-shell-interpreter "python3")
+  (py-shell-name "/usr/bin/python3"))
+
+(use-package pyvenv)
+
+(use-package pipenv
+  :hook (python-mode . pipenv-mode)
+  :init
+  (setq
+   pipenv-projectile-after-switch-function
+   #'pipenv-projectile-after-switch-extended))
+
 ;; R Development
 (use-package ess
   :ensure t
   :init (require 'ess-site))
 
+;; Org Mode
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode)
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+(use-package org
+  :config
+  (setq org-agenda-files '("~/Dokumente/Orgfiles/tasks.org"))
+  (setq org-agenda-start-with-log-mode t)
+  (setq org-log-done 'time)
+  (setq org-log-into-drawer t)
+
+  (setq org-todo-keywords
+	'((sequence "TODO(t)" "NEXT(n)" "WAITING(w)" "HOLD(h)" "|" "DONE(d!)" "CANCELED(k)")
+	;  (sequence ("BACKLOG(b)" "PLAN(p)" "ACTIVE(a)" "REVIEW(v)" "WAIT(w@/!)" "|" "COMPLETED(c)" ("CANCLED(k@)")))))
+  
+	  ))
+(setq org-refile-targets
+    '(("Archive.org" :maxlevel . 1)
+      ("Tasks.org" :maxlevel . 1)))
+
+  ;; Save Org buffers after refiling!
+  (advice-add 'org-refile :after 'org-save-all-org-buffers)
+
+  (setq org-tag-alist
+	'((:startgroup)
+					; Put mutually exclusive tags here
+	  (:endgroup)
+	  ("@errand" . ?E)
+	  ("@home" . ?H)
+	  ("@work" . ?W)
+	  ("agenda" . ?a)
+	  ("planning" . ?p)
+	  ("batch" . ?b)
+	  ("note" . ?n)
+	  ("idea" . ?i)))
+
+  (setq org-capture-templates
+	'(
+	  ("t" "Todo" entry (file+headline "~/Dokumente/Orgfiles/tasks.org" "Active") "%T %^G")
+	("b" "Backlog" entry (file+headline "~/Dokumente/Orgfiles/tasks.org" "Backlog"))))
+
+  (setq org-agenda-custom-commands
+   '(("d" "Dashboard"
+     ((agenda "" ((org-deadline-warning-days 7)))
+      (todo "NEXT"
+        ((org-agenda-overriding-header "Next Tasks")))
+      (tags-todo "agenda/ACTIVE" ((org-agenda-overriding-header "Active Projects")))))
+
+    ("n" "Next Tasks"
+     ((todo "NEXT"
+        ((org-agenda-overriding-header "Next Tasks")))))
+
+    ("W" "Work Tasks" tags-todo "+@work")
+
+    ;; Low-effort next actions
+    ("e" tags-todo "+TODO=\"NEXT\"+Effort<15&+Effort>0"
+     ((org-agenda-overriding-header "Low Effort Tasks")
+      (org-agenda-max-todos 20)
+      (org-agenda-files org-agenda-files)))
+
+    ("w" "Workflow Status"
+     ((todo "WAIT"
+            ((org-agenda-overriding-header "Waiting on External")
+             (org-agenda-files org-agenda-files)))
+      (todo "REVIEW"
+            ((org-agenda-overriding-header "In Review")
+             (org-agenda-files org-agenda-files)))
+      (todo "PLAN"
+            ((org-agenda-overriding-header "In Planning")
+             (org-agenda-todo-list-sublevels nil)
+             (org-agenda-files org-agenda-files)))
+      (todo "BACKLOG"
+            ((org-agenda-overriding-header "Project Backlog")
+             (org-agenda-todo-list-sublevels nil)
+             (org-agenda-files org-agenda-files)))
+      (todo "READY"
+            ((org-agenda-overriding-header "Ready for Work")
+             (org-agenda-files org-agenda-files)))
+      (todo "ACTIVE"
+            ((org-agenda-overriding-header "Active Projects")
+             (org-agenda-files org-agenda-files)))
+      (todo "COMPLETED"
+            ((org-agenda-overriding-header "Completed Projects")
+             (org-agenda-files org-agenda-files)))
+      (todo "CANC"
+            ((org-agenda-overriding-header "Cancelled Projects")
+             (org-agenda-files org-agenda-files)))))))
+
+  )
+
+;; ORG ROAM
+(use-package org-roam
+  :ensure t
+  :init
+  (setq org-roam-v2-ack t)
+  :custom
+  (org-roam-directory "~/Dokumente/RoamNotes")
+  (org-roam-completion-everywhere t)
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         :map org-mode-map
+         ("C-M-i"    . completion-at-point))
+  :config
+  (org-roam-setup))
 
 
 ;; Global Key Bindings
 (global-set-key (kbd "M-ü") 'er/expand-region)
 (global-set-key (kbd "C-x o") 'ace-window)
 (global-set-key (kbd "C-a") 'back-to-indentation)
-(global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+;; (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+(global-set-key (kbd "C-x b") 'persp-counsel-switch-buffer)
 (global-set-key (kbd "C-c v") 'ivy-push-view)
 (global-set-key (kbd "C-c V") 'ivy-pop-view)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
 (global-set-key (kbd "M-Z") 'zap-to-char)
-(global-set-key (kbd "C-c c") 'org-capture)
+(global-set-key (kbd "C-c c") 'counsel-org-capture)
 (global-set-key (kbd "C-x a") 'org-agenda)
-(global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-(global-set-key (kbd "C-ä") 'toggle-transparency)
-(global-set-key "\C-x\C-m" 'counsel-M-x)
+;(global-set-key (kbd "C-ä") 'toggle-transparency)
+(global-set-key (kbd "C-x C-m") 'counsel-M-x)
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "M-y") 'counsel-yank-pop)
-(global-set-key (kbd "C-c m") 'mu4e)
+(global-set-key (kbd "C-x r b") 'counsel-bookmark)
+(global-set-key (kbd "C-s") 'swiper)
+(global-set-key (kbd "C-r") 'swiper)
+(global-set-key (kbd "C-ü") 'counsel-load-theme)
+
 
 
 ;; General Emacs Config
+(use-package popper
+  :ensure t ; or :straight t
+  :bind (("C-´"   . popper-toggle-latest)
+         ("M-´"   . popper-cycle)
+         ("C-M-`" . popper-toggle-type))
+  :init
+  (setq popper-reference-buffers
+        '("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          help-mode
+          compilation-mode))
+  (popper-mode +1)
+  (popper-echo-mode +1))  
+
+;; disable line numbering for certain modes
+(dolist (mode '(org-mode-hook
+		term-mode-hook
+		shell-mode-hook
+		treemacs-mode
+		eshell-mode-hook))
+  (add-hook mode(lambda () (display-line-numbers-mode 0))))
+
 (put 'narrow-to-region 'disabled nil)
 (put 'set-goal-column 'disabled nil)
 (put 'narrow-to-page 'disabled nil)
@@ -419,36 +568,52 @@
 (setq inhibit-startup-message t)
 (setq initial-scratch-message "")
 (setq-default fill-column 80)
-
-(when (window-system)
-  ;;(load-theme 'atom-one-dark t)
-  (load-theme 'xresources t)
-  (load-theme 'org-beautify t))
-
-
-
 (add-hook 'text-mode-hook #'auto-fill-mode)
+					; fonts
+(set-frame-font "DejaVu Sans 10")
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-names-vector
-   ["#21252B" "#E06C75" "#98C379" "#E5C07B" "#61AFEF" "#C678DD" "#56B6C2" "#ABB2BF"])
  '(custom-safe-themes
-   '("171d1ae90e46978eb9c342be6658d937a83aaa45997b1d7af7657546cae5985b" "e5dc5b39fecbeeb027c13e8bfbf57a865be6e0ed703ac1ffa96476b62d1fae84" "e29a6c66d4c383dbda21f48effe83a1c2a1058a17ac506d60889aba36685ed94" default))
- '(fci-rule-color "#3E4451")
+   '("9685cefcb4efd32520b899a34925c476e7920725c8d1f660e7336f37d6d95764" "e29a6c66d4c383dbda21f48effe83a1c2a1058a17ac506d60889aba36685ed94" default))
+ '(exwm-floating-border-color "#1c1e24")
+ '(highlight-tail-colors ((("#2e343d") . 0) (("#353340") . 20)))
+ '(jdee-db-active-breakpoint-face-colors (cons "#222228" "#EB64B9"))
+ '(jdee-db-requested-breakpoint-face-colors (cons "#222228" "#74DFC4"))
+ '(jdee-db-spec-breakpoint-face-colors (cons "#222228" "#4E415C"))
+ '(objed-cursor-color "#964C7B")
  '(package-selected-packages
-   '(xresources-theme highlight-indentation docker-compose-mode dockerfile-mode docker-file docker-file-mode treemacs-projectile treemacs use-package-hydra yasnippet-snippets which-key web-mode visual-regexp-steroids use-package undo-tree synosaurus smart-mode-line-atom-one-dark-theme shell-pop sass-mode rainbow-delimiters projectile perspeen paredit org-super-agenda org-ref org-bullets org-beautify-theme openwith magit julia-mode helm-css-scss flycheck expand-region evil-commentary ess emmet-mode elpy elfeed-goodies dot-mode counsel auctex atom-one-dark-theme all-the-icons-ivy all-the-icons-dired ace-window academic-phrases))
- '(tetris-x-colors
-   [[229 192 123]
-    [97 175 239]
-    [209 154 102]
-    [224 108 117]
-    [152 195 121]
-    [198 120 221]
-    [86 182 194]])
- '(window-divider-default-right-width 2))
+   '(popper vscode-dark-plus-theme doom-themes perspective org-roam pipenv evil-mode evil-visual-mark-mode helpful ivy-rich counsel-projectile dap-mode lsp-ivy lsp-treemacs lsp-ui company-box company ## lsp-mode highlight-indentation docker-compose-mode dockerfile-mode docker-file docker-file-mode treemacs-projectile treemacs use-package-hydra yasnippet-snippets which-key web-mode visual-regexp-steroids use-package undo-tree synosaurus smart-mode-line-atom-one-dark-theme shell-pop sass-mode rainbow-delimiters projectile perspeen paredit org-super-agenda org-ref org-bullets org-beautify-theme openwith magit julia-mode helm-css-scss flycheck expand-region evil-commentary ess emmet-mode elpy elfeed-goodies dot-mode counsel auctex atom-one-dark-theme all-the-icons-ivy all-the-icons-dired ace-window academic-phrases))
+ '(pdf-view-midnight-colors (cons "#FFFFFF" "#27212E"))
+ '(persp-mode-prefix-key [67109092])
+ '(py-python-command "python3")
+ '(rustic-ansi-faces
+   ["#27212E" "#964C7B" "#74DFC4" "#FFE261" "#40B4C4" "#EB64B9" "#B4DCE7" "#FFFFFF"])
+ '(vc-annotate-background "#27212E")
+ '(vc-annotate-color-map
+   (list
+    (cons 20 "#74DFC4")
+    (cons 40 "#a2e0a3")
+    (cons 60 "#d0e182")
+    (cons 80 "#FFE261")
+    (cons 100 "#ffd35f")
+    (cons 120 "#ffc55d")
+    (cons 140 "#FFB85B")
+    (cons 160 "#f89c7a")
+    (cons 180 "#f18099")
+    (cons 200 "#EB64B9")
+    (cons 220 "#ce5ca4")
+    (cons 240 "#b2548f")
+    (cons 260 "#964C7B")
+    (cons 280 "#834973")
+    (cons 300 "#72466b")
+    (cons 320 "#604363")
+    (cons 340 "#544863")
+    (cons 360 "#544863")))
+ '(vc-annotate-very-old-color nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
