@@ -58,6 +58,9 @@
   :init
   (ivy-rich-mode 1))
 
+(use-package magit
+  :ensure t)
+
 (use-package counsel
   :ensure t)
 
@@ -95,6 +98,40 @@
   :init
   (persp-mode))
 
+
+(defun rune/evil-hook ()
+  (dolist (mode '(custom-mode
+                  eshell-mode
+                  git-rebase-mode
+                  erc-mode
+                  circe-server-mode
+                  circe-chat-mode
+                  circe-query-mode
+                  sauron-mode
+                  term-mode))
+   (add-to-list 'evil-emacs-state-modes mode)))
+
+(use-package evil
+  :init
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-i-jump nil)
+  :hook (evil-mode . rune/evil-hook)
+  :config
+  (evil-mode 1)
+  ;; Use visual line motions even outside of visual-line-mode buffers
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+
+  (evil-set-initial-state 'messages-buffer-mode 'normal)
+  (evil-set-initial-state 'dashboard-mode 'normal))
+
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init))
+
 (use-package key-chord
   :ensure t
   :init
@@ -102,8 +139,6 @@
   (key-chord-mode 1)
   (key-chord-define-global "qq" 'view-mode)
   (key-chord-define evil-insert-state-map  "jk" 'evil-normal-state))
-
-(use-package evil)
 
 (use-package view
   :ensure t
@@ -312,6 +347,40 @@
   :ensure t)
 
 ;; WebDev Packages
+(use-package web-mode
+  :ensure t
+  :init
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-code-indent-offset 2)
+  (setq web-mode-css-indent-offset 2)
+  (setq js-indent-level 2)
+  (setq web-mode-enable-auto-pairing t)
+  (setq web-mode-enable-auto-expanding t)
+  (setq web-mode-enable-css-colorization t)
+  (add-hook 'web-mode-hook 'electric-pair-mode)
+  (add-hook 'web-mode-hook 'emmet-mode)
+(setq web-mode-engines-alist
+      '(("jinja2"    . "\\.jinja2\\'")
+        ("django"    . "\\.html\\'")))
+  :config
+  :mode ("\\.html$" . web-mode)
+  :mode ("\\.css$" . web-mode)
+  :mode ("\\.js$" . web-mode)
+)
+
+(use-package emmet-mode
+  :ensure t
+  :commands (emmet-mode
+             emmet-next-edit-point
+             emmet-prev-edit-point)
+  :init
+  (setq emmet-indentation 2)
+  (setq emmet-move-cursor-between-quotes t)
+  :config
+  ;; Auto-start on any markup modes
+  (add-hook 'sgml-mode-hook 'emmet-mode)
+  (add-hook 'web-mode-hook 'emmet-mode))
+
 (use-package typescript-mode
   :mode "\\.ts\\'"
   :hook
@@ -347,6 +416,9 @@
   :config
   (js2r-add-keybindings-with-prefix "C-c ."))
 
+(use-package rjsx-mode
+  :config
+  (add-to-list 'auto-mode-alist '("components\\/.*\\.js\\'" . rjsx-mode)))
 
 
 ;; (use-package xref-js2
@@ -373,6 +445,11 @@
   (setq
    pipenv-projectile-after-switch-function
    #'pipenv-projectile-after-switch-extended))
+
+(use-package elpy
+  :ensure t
+  :init
+  (elpy-enable))
 
 ;; R Development
 (use-package ess
@@ -417,10 +494,31 @@
 	  ("note" . ?n)
 	  ("idea" . ?i)))
 
+(setq org-src-preserve-indentation t)
+
+;; Let org mode show images inline
+(setq org-startup-with-inline-images t)
+
   (setq org-capture-templates
-	'(
-	  ("t" "Todo" entry (file+headline "~/Dokumente/Orgfiles/tasks.org" "Active") "%T %^G")
-	("b" "Backlog" entry (file+headline "~/Dokumente/Orgfiles/tasks.org" "Backlog"))))
+        '(("t" "Todo" entry (file+headline "~/Dokumente/Orgfiles/tasks.org" "Active")
+          "* TODO %?\n  %i\n  %a")
+          ("j" "Journal" entry (file+datetree "~/org/journal.org")
+           "* %?\nEntered on %U\n  %i\n  %a")
+          ("a" "Scheduled TODO" entry (file+headline "~/Dokumente/Orgfiles/tasks.org" "Active")
+           "* TODO %? %^G \nSCHEDULED: %^t\n  %U" :empty-lines 1)
+          ("d" "Deadline" entry (file+headline  "~/Dokumente/Orgfiles/tasks.org" "Active")
+           "* TODO %? %^G \n DEADLINE: %^t" :empty-lines 1)
+          ("s" "Shopping Item" entry (file+headline "~/Dokumente/Orgfiles/tasks.org" "Active")
+          "* TODO %? %^G \nSCHEDULED: %^t\n  %U" :empty-lines 1)
+          ("p" "Project" entry (file "~/Dokumente/Orgfiles/tasks.org")
+           "*  %? %i " :empty-lines 1)
+          ("i" "Idea" entry (file "~/Dokumente/Orgfiles/tasks.org")
+           "*  %? %i %^G" :empty-lines 1)
+          ("c" "Schedule & Deadline" entry (file+headline  "~/Dokumente/Orgfiles/tasks.org" "Active")
+           "* TODO %? %^G \nSCHEDULED: %^t\n DEADLINE: %^t" :empty-lines 1)
+          ("b" "Bookmark" entry (file+headline "~/Dokumente/Orgfiles/tasks.org" "Active")
+  	         "* %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n" :empty-lines 1)
+         ))
 
   (setq org-agenda-custom-commands
    '(("d" "Dashboard"
@@ -469,6 +567,15 @@
             ((org-agenda-overriding-header "Cancelled Projects")
              (org-agenda-files org-agenda-files)))))))
 
+	(org-babel-do-load-languages
+	'org-babel-load-languages
+	'((R . t)
+	(python . t)
+	(emacs-lisp . t)
+	(shell . t)
+	(sql . t)
+	(sqlite . t)))
+
   )
 
 ;; ORG ROAM
@@ -512,6 +619,33 @@
 
 
 ;; General Emacs Config
+(use-package openwith
+  :ensure t
+  :config
+  (setq openwith-associations
+            (list
+             (list (openwith-make-extension-regexp
+                    '("mpg" "mpeg"  "mp4"
+                      "avi" "wmv" "wav" "mov" "flv"
+                      "ogm"  "mkv"))
+                   "mpv"
+                   '(file))
+             ;; (list (openwith-make-extension-regexp
+             ;;        '("xbm" "pbm" "pgm" "ppm" "pnm"
+             ;;          "png" "gif" "bmp" "tif" "jpeg" "jpg"))
+             ;;       "geeqie"
+             ;;       '(file))
+             (list (openwith-make-extension-regexp
+                    '("doc" "xls" "ppt" "odt" "ods" "odg" "odp" "xlsx"))
+                   "libreoffice"
+                   '(file))
+             (list (openwith-make-extension-regexp
+                    '("pdf" "ps" "ps.gz" "dvi"))
+                   "zathura"
+                   '(file))
+             ))
+      (openwith-mode 1))
+
 (use-package popper
   :ensure t ; or :straight t
   :bind (("C-´"   . popper-toggle-latest)
@@ -586,7 +720,7 @@
  '(jdee-db-spec-breakpoint-face-colors (cons "#222228" "#4E415C"))
  '(objed-cursor-color "#964C7B")
  '(package-selected-packages
-   '(popper vscode-dark-plus-theme doom-themes perspective org-roam pipenv evil-mode evil-visual-mark-mode helpful ivy-rich counsel-projectile dap-mode lsp-ivy lsp-treemacs lsp-ui company-box company ## lsp-mode highlight-indentation docker-compose-mode dockerfile-mode docker-file docker-file-mode treemacs-projectile treemacs use-package-hydra yasnippet-snippets which-key web-mode visual-regexp-steroids use-package undo-tree synosaurus smart-mode-line-atom-one-dark-theme shell-pop sass-mode rainbow-delimiters projectile perspeen paredit org-super-agenda org-ref org-bullets org-beautify-theme openwith magit julia-mode helm-css-scss flycheck expand-region evil-commentary ess emmet-mode elpy elfeed-goodies dot-mode counsel auctex atom-one-dark-theme all-the-icons-ivy all-the-icons-dired ace-window academic-phrases))
+   '(rsjx-mode popper vscode-dark-plus-theme doom-themes perspective org-roam pipenv evil-mode evil-visual-mark-mode helpful ivy-rich counsel-projectile dap-mode lsp-ivy lsp-treemacs lsp-ui company-box company ## lsp-mode highlight-indentation docker-compose-mode dockerfile-mode docker-file docker-file-mode treemacs-projectile treemacs use-package-hydra yasnippet-snippets which-key web-mode visual-regexp-steroids use-package undo-tree synosaurus smart-mode-line-atom-one-dark-theme shell-pop sass-mode rainbow-delimiters projectile perspeen paredit org-super-agenda org-ref org-bullets org-beautify-theme openwith magit julia-mode helm-css-scss flycheck expand-region evil-commentary ess emmet-mode elpy elfeed-goodies dot-mode counsel auctex atom-one-dark-theme all-the-icons-ivy all-the-icons-dired ace-window academic-phrases))
  '(pdf-view-midnight-colors (cons "#FFFFFF" "#27212E"))
  '(persp-mode-prefix-key [67109092])
  '(py-python-command "python3")
